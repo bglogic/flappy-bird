@@ -44,22 +44,6 @@ settings =
 	},
 
 	--
-	-- Plugins section
-	--
-	plugins =
-	{
-		["plugin.vk.direct"] =
-			{
-				publisherId = "com.coronalabs"
-		 	},
-	 	["plugin.appodeal"] =
-	 		{
-		 		publisherId = "com.coronalabs"
-	 		},
-
-	},
-
-	--
 	-- Project section
 	--
 	excludeFiles =

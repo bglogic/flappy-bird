@@ -4,9 +4,6 @@
 --
 -----------------------------------------------------------------------------------------
 
-local vk = require("plugin_vk_direct")
---local appodeal = require( "plugin.appodeal" )
-
 
 local gameStatus = 0
 
@@ -52,27 +49,6 @@ local function loadSounds()
   swooshingSound = audio.loadSound( "Sounds/sfx_swooshing.caf" )
   wingSound = audio.loadSound( "Sounds/sfx_wing.caf" )
   boomSound = audio.loadSound( "Sounds/sfx_boom.mp3" )
-end
-
-
-local function call_VK_event()
-    local args={}
-    args.user_id='33251324'
-    args.activity_id=2
-    args.value=score
-    vk.api('secure.addAppEvent', args)
-end
-
-
-local function saveScoreToVk()
-
-  if score>3 then
-    call_VK_event()
-  elseif score>0 then
-    vk.showLeaderboardBox(score)
-  else
-    vk.showShareBox("I just scored " .. score .. "! Create your own game with Corona.", {"https://coronalabs.com/", }, "wall")
-  end
 end
 
 
@@ -249,11 +225,6 @@ local function crash()
   board.y = 0
   board.alpha = 1
 
-
-  saveScoreToVk()
-
-
-
   if score>bestScore then
     bestScore = score
     saveBestScore()
@@ -397,13 +368,6 @@ local function setupImages()
   title:setFillColor( 1, 1, 1 )
 end
 
-
-local function vkListener( event )
---        if event.status == "success" then
---            loadingText.text = event.method
---        end
-end
-
 -- Start application point
 loadSounds()
 setupImages()
@@ -418,49 +382,4 @@ gameLoopTimer = timer.performWithDelay( 25, gameLoop, 0 )
 -- debug text line
 local loadingText = display.newText( "Debug info", display.contentCenterX, display.contentCenterY, nil, 20)
 
-
--- vk listener
-local function vkListener( event )
-  loadingText.text = "version 1229\nevent = " .. event.method
-	if event.method == 'init' then
-		if event.status == 'success' then
-      loadingText.text = "html5 works correct version 1229"
---			loadingText:removeSelf( )
-		else
-			loadingText.text = "Error while loading\n(" .. tostring(event.data and event.data.message) .. ")"
-		end
-	end
-end
-
-
--- appodeal listener
-local function adListener( event )
-    if ( event.phase == "init" ) then  -- Successful initialization
-        -- maybe set a flag that you can see in all scenes to know that initialization is complete
-
-    elseif ( event.phase == "failed" ) then  -- The ad failed to load
-        print( event.type )
-        print( event.isError )
-        print( event.response )
-    end
-end
-
 display.setStatusBar( display.HiddenStatusBar )
-
-if system.getInfo('platform') ~= 'html5' then
-	timer.performWithDelay( 100, function( )
-    loadingText.text = "~html5"
-		vkListener{ method = 'init', status='success' }
-	end )
-else
-  loadingText.text = "html5"
-	vk.init(vkListener)
-end
-
---appodeal.init( adListener,
---      { appKey="d0b151949cc7fdaecc358106bb00d606fdc7d51b70436d36",
---      locationTracking = false,
---  	supportedAdTypes = {"interstitial"},
---          childDirectedTreatment = true,
---  	bannerAnimation = true,
---  	testMode = true } )
