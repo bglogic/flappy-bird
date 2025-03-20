@@ -43,11 +43,11 @@ local gold
 local pipes = {}
 
 local function loadSounds()
-  dieSound = audio.loadSound( "Sounds/sfx_die.caf" )
-  hitSound = audio.loadSound( "Sounds/sfx_hit.caf" )
-  pointSound = audio.loadSound( "Sounds/sfx_point.aif" )
-  swooshingSound = audio.loadSound( "Sounds/sfx_swooshing.caf" )
-  wingSound = audio.loadSound( "Sounds/sfx_wing.caf" )
+  dieSound = audio.loadSound( "Sounds/sfx_die.wav" )
+  hitSound = audio.loadSound( "Sounds/sfx_hit.wav" )
+  pointSound = audio.loadSound( "Sounds/sfx_point.wav" )
+  swooshingSound = audio.loadSound( "Sounds/sfx_swooshing.wav" )
+  wingSound = audio.loadSound( "Sounds/sfx_wing.wav" )
   boomSound = audio.loadSound( "Sounds/sfx_boom.mp3" )
 end
 
