@@ -321,7 +321,6 @@ local function setupImages()
   local ground = display.newImageRect("Assets/ground.png", display.actualContentWidth, display.actualContentHeight)
   ground.x = display.contentCenterX
   ground.y = display.contentCenterY
-  ground:addEventListener("tap", wing)
 
   for i = 1, 3 do
     pipes[i] = display.newImageRect("Assets/pipe.png", 80, 1000)
@@ -393,5 +392,6 @@ setupLand()
 initGame()
 loadBestScore()
 local gameLoopTimer = timer.performWithDelay(25, gameLoop, 0)
+Runtime:addEventListener("tap", wing)
 
 display.setStatusBar(display.HiddenStatusBar)
