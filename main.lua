@@ -13,6 +13,9 @@ local gameStatus = {
 }
 local currentGameStatus = gameStatus.ready
 
+-- Last time in ms
+local millisecsPreviousFrame = 0
+
 local yLand = display.actualContentHeight * 0.8
 local xLand = display.contentCenterX
 
@@ -25,8 +28,6 @@ local yReady = display.contentCenterY - 140
 local uBird = -200
 local vBird = 0
 local wBird = -320
-local g = 800
-local dt = 0.025
 
 local score = 0
 local bestScore = 0
@@ -275,11 +276,15 @@ local function collision(i)
   return boom
 end
 
-local function gameLoop()
+local function gameLoop(event)
+  local millisecsCurrentFrame = event.time
+  local dt = (millisecsCurrentFrame - millisecsPreviousFrame) / 1000
+  millisecsPreviousFrame = millisecsCurrentFrame
+
   local eps = 10
   local leftEdge = -60
   if currentGameStatus == gameStatus.playing then
-    xLand = xLand + dt * uBird
+    xLand = xLand + uBird * dt
     if xLand < 0 then
       xLand = display.contentCenterX * 2 + xLand
     end
@@ -287,7 +292,7 @@ local function gameLoop()
     for i = 1, 3 do
       local xb = xBird - eps
       local xOld = pipes[i].x
-      local x = xOld + dt * uBird
+      local x = xOld + uBird * dt
       if x < leftEdge then
         x = wPipe * 3 + x
         pipes[i].y = calcRandomHole()
@@ -310,8 +315,9 @@ local function gameLoop()
   end
 
   if currentGameStatus == gameStatus.playing or currentGameStatus == gameStatus.dying then
-    vBird = vBird + dt * g
-    yBird = yBird + dt * vBird
+    -- Apply gravity at 800 pixels per second
+    vBird = vBird + 800 * dt
+    yBird = yBird + vBird * dt
     if yBird > yLand - eps then
       yBird = yLand - eps
       crash()
@@ -330,7 +336,7 @@ local function setupLand()
   ground = display.newImageRect("Assets/ground.png", display.actualContentWidth * 2, display.actualContentHeight * 0.2)
   ground.x = display.contentCenterX
 
-  -- (display.actualContentHeight * 0.8) + (ground.height / 2) == display.actualContentHeight * 0.9
+  -- (display.actualContentHeight * 0.8) + (ground.contentHeight / 2) == display.actualContentHeight * 0.9
   ground.y = display.actualContentHeight * 0.9
 end
 
@@ -412,8 +418,8 @@ setupExplosion()
 setupLand()
 initGame()
 loadBestScore()
-local gameLoopTimer = timer.performWithDelay(25, gameLoop, 0)
 
+Runtime:addEventListener("enterFrame", gameLoop)
 Runtime:addEventListener("tap", tapInput)
 Runtime:addEventListener("key", keyInput)
 
