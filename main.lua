@@ -13,8 +13,7 @@ local gameStatus = {
 }
 local currentGameStatus = gameStatus.ready
 
-local yLand = display.actualContentHeight - (display.actualContentHeight * 0.2)
-local hLand = display.actualContentHeight * 0.1
+local yLand = display.actualContentHeight * 0.8
 local xLand = display.contentCenterX
 
 local yBird = display.contentCenterY - 50
@@ -34,7 +33,7 @@ local bestScore = 0
 local scoreStep = 5
 
 local bird
-local land
+local ground
 local title
 local getReady
 local gameOver
@@ -284,7 +283,7 @@ local function gameLoop()
     if xLand < 0 then
       xLand = display.contentCenterX * 2 + xLand
     end
-    land.x = xLand
+    ground.x = xLand
     for i = 1, 3 do
       local xb = xBird - eps
       local xOld = pipes[i].x
@@ -328,15 +327,19 @@ local function gameLoop()
 end
 
 local function setupLand()
-  land = display.newImageRect("Assets/land.png", display.actualContentWidth * 2, hLand * 2)
-  land.x = xLand
-  land.y = yLand + hLand
+  ground = display.newImageRect("Assets/land.png", display.actualContentWidth * 2, display.actualContentHeight * 0.2)
+  ground.x = display.contentCenterX
+  ground.y = display.actualContentHeight * 0.9
 end
 
 local function setupImages()
-  local ground = display.newImageRect("Assets/ground.png", display.actualContentWidth, display.actualContentHeight)
-  ground.x = display.contentCenterX
-  ground.y = display.contentCenterY
+  local background = display.newImageRect(
+    "Assets/background.png",
+    display.actualContentWidth,
+    display.actualContentHeight
+  )
+  background.x = display.contentCenterX
+  background.y = display.contentCenterY
 
   for i = 1, 3 do
     pipes[i] = display.newImageRect("Assets/pipe.png", 80, 1000)
