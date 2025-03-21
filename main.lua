@@ -5,7 +5,13 @@
 -----------------------------------------------------------------------------------------
 
 
-local gameStatus = 0
+local gameStatus = {
+  ready = 0,
+  playing = 1,
+  dying = 2,
+  gameOver = 3
+}
+local currentGameStatus = gameStatus.ready
 
 local yLand = display.actualContentHeight - (display.actualContentHeight * 0.2)
 local hLand = display.actualContentHeight * 0.1
@@ -148,19 +154,19 @@ local function initGame()
 end
 
 local function flap()
-  if gameStatus == 0 then
-    gameStatus = 1
+  if currentGameStatus == gameStatus.ready then
+    currentGameStatus = gameStatus.playing
     getReady.alpha = 0
   end
 
-  if gameStatus == 1 then
+  if currentGameStatus == gameStatus.playing then
     vBird = wBird
     bird:play()
     audio.play(wingSound)
   end
 
-  if gameStatus == 3 then
-    gameStatus = 0
+  if currentGameStatus == gameStatus.gameOver then
+    currentGameStatus = gameStatus.ready
     initGame()
   end
 end
@@ -228,7 +234,7 @@ end
 
 
 local function crash()
-  gameStatus = 3
+  currentGameStatus = gameStatus.gameOver
   audio.play(hitSound)
   gameOver.y = 0
   gameOver.alpha = 1
@@ -273,7 +279,7 @@ end
 local function gameLoop()
   local eps = 10
   local leftEdge = -60
-  if gameStatus == 1 then
+  if currentGameStatus == gameStatus.playing then
     xLand = xLand + dt * uBird
     if xLand < 0 then
       xLand = display.contentCenterX * 2 + xLand
@@ -299,12 +305,12 @@ local function gameLoop()
       if collision(i) == 1 then
         explosion()
         audio.play(dieSound)
-        gameStatus = 2
+        currentGameStatus = gameStatus.dying
       end
     end
   end
 
-  if gameStatus == 1 or gameStatus == 2 then
+  if currentGameStatus == gameStatus.playing or currentGameStatus == gameStatus.dying then
     vBird = vBird + dt * g
     yBird = yBird + dt * vBird
     if yBird > yLand - eps then
@@ -313,7 +319,7 @@ local function gameLoop()
     end
     bird.x = xBird
     bird.y = yBird
-    if gameStatus == 1 then
+    if currentGameStatus == gameStatus.playing then
       bird.rotation = -30 * math.atan(vBird / uBird)
     else
       bird.rotation = vBird / 8
