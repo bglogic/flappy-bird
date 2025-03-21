@@ -16,25 +16,13 @@ local currentGameStatus = gameStatus.ready
 -- Last time in ms
 local millisecsPreviousFrame = 0
 
-local yLand = display.actualContentHeight * 0.8
-local xLand = display.contentCenterX
-
-local yBird = display.contentCenterY - 50
-local xBird = display.contentCenterX - 50
-
 local wPipe = display.contentCenterX + 10
 local yReady = display.contentCenterY - 140
-
-local uBird = -200
-local vBird = 0
-local wBird = -320
 
 local score = 0
 local bestScore = 0
 local scoreStep = 5
 
-local bird
-local ground
 local title
 local getReady
 local gameOver
@@ -55,19 +43,8 @@ local swooshingSound
 local wingSound
 local boomSound
 
-local function loadSounds()
-  dieSound = audio.loadSound("Sounds/sfx_die.wav")
-  hitSound = audio.loadSound("Sounds/sfx_hit.wav")
-  pointSound = audio.loadSound("Sounds/sfx_point.wav")
-  swooshingSound = audio.loadSound("Sounds/sfx_swooshing.wav")
-  wingSound = audio.loadSound("Sounds/sfx_wing.wav")
-  boomSound = audio.loadSound("Sounds/sfx_boom.mp3")
-end
-
-
-local function calcRandomHole()
-  return 100 + 20 * math.random(10)
-end
+local bird
+local ground
 
 local function loadBestScore()
   local path = system.pathForFile("bestscore.txt", system.DocumentsDirectory)
@@ -104,8 +81,46 @@ local function saveBestScore()
   file = nil
 end
 
+local function crash()
+  currentGameStatus = gameStatus.gameOver
+  audio.play(hitSound)
+  gameOver.y = 0
+  gameOver.alpha = 1
+  transition.to(gameOver, { time = 600, y = yReady, transition = easing.outBounce })
+  board.y = 0
+  board.alpha = 1
 
-local function setupBird()
+  if score > bestScore then
+    bestScore = score
+    saveBestScore()
+  end
+  bestTitle.text = bestScore
+  scoreTitle.text = score
+  if score < 10 then
+    silver.alpha = 0
+    gold.alpha = 0
+  elseif score < 50 then
+    silver.alpha = 1
+    gold.alpha = 0
+  else
+    silver.alpha = 0
+    gold.alpha = 1
+  end
+  transition.to(board, { time = 600, y = yReady + 100, transition = easing.outBounce })
+end
+
+bird = {
+  --- @type DisplayObject
+  displayObject = nil,
+  nextX = display.contentCenterX - 50,
+  nextY = display.contentCenterY - 50,
+  velocityX = -200,
+  velocityY = 0,
+  initialVelocityY = -320,
+  gravity = 800
+}
+
+function bird:setup()
   local imageSheet = graphics.newImageSheet("Assets/bird.png", {
     width = 70,
     height = 50,
@@ -114,7 +129,7 @@ local function setupBird()
     sheetContentHeight = 50  -- height of original 1x size of entire sheet
   })
 
-  bird = display.newSprite(imageSheet, {
+  self.displayObject = display.newSprite(imageSheet, {
     name = "walking",
     start = 1,
     count = 3,
@@ -122,8 +137,67 @@ local function setupBird()
     loopCount = 2,            -- Optional ; default is 0 (loop indefinitely)
     loopDirection = "forward" -- Optional ; values include "forward" or "bounce"
   })
-  bird.x = xBird
-  bird.y = yBird
+  self.displayObject.x = self.nextX
+  self.displayObject.y = self.nextY
+end
+
+function bird:update(dt, eps)
+  if currentGameStatus == gameStatus.playing or currentGameStatus == gameStatus.dying then
+    self.velocityY = self.velocityY + self.gravity * dt
+    self.nextY = self.nextY + self.velocityY * dt
+    if self.nextY > ground.top - eps then
+      self.nextY = ground.top - eps
+      crash()
+    end
+    self.displayObject.x = self.nextX
+    self.displayObject.y = self.nextY
+    if currentGameStatus == gameStatus.playing then
+      self.displayObject.rotation = -30 * math.atan(self.velocityY / self.velocityX)
+    else
+      self.displayObject.rotation = self.velocityY / 8
+    end
+  end
+end
+
+ground = {
+  --- @type DisplayObject
+  displayObject = nil,
+  nextX = display.contentCenterX,
+  top = display.actualContentHeight * 0.8
+}
+
+function ground:setup()
+  self.displayObject = display.newImageRect(
+    "Assets/ground.png",
+    display.actualContentWidth * 2,
+    display.actualContentHeight * 0.2
+  )
+  self.displayObject.x = display.contentCenterX
+
+  -- (display.actualContentHeight * 0.8) + (self.displayObject.contentHeight / 2) == display.actualContentHeight * 0.9
+  self.displayObject.y = display.actualContentHeight * 0.9
+end
+
+function ground:update(dt)
+  self.nextX = self.nextX + bird.velocityX * dt
+  if self.nextX < 0 then
+    self.nextX = display.contentCenterX * 2 + self.nextX
+  end
+  self.displayObject.x = self.nextX
+end
+
+local function loadSounds()
+  dieSound = audio.loadSound("Sounds/sfx_die.wav")
+  hitSound = audio.loadSound("Sounds/sfx_hit.wav")
+  pointSound = audio.loadSound("Sounds/sfx_point.wav")
+  swooshingSound = audio.loadSound("Sounds/sfx_swooshing.wav")
+  wingSound = audio.loadSound("Sounds/sfx_wing.wav")
+  boomSound = audio.loadSound("Sounds/sfx_boom.mp3")
+end
+
+
+local function calcRandomHole()
+  return 100 + 20 * math.random(10)
 end
 
 local function initGame()
@@ -135,8 +209,8 @@ local function initGame()
     pipes[i].x = 400 + display.contentCenterX * (i - 1)
     pipes[i].y = calcRandomHole()
   end
-  yBird = display.contentCenterY - 50
-  xBird = display.contentCenterX - 50
+  bird.nextX = display.contentCenterX - 50
+  bird.nextY = display.contentCenterY - 50
   getReady.y = 0
   getReady.alpha = 1
   gameOver.y = 0
@@ -144,12 +218,15 @@ local function initGame()
   board.y = 0
   board.alpha = 0
   audio.play(swooshingSound)
-  transition.to(bird, { time = 300, x = xBird, y = yBird, rotation = 0 })
+  transition.to(
+    bird.displayObject,
+    { time = 300, x = bird.nextX, y = bird.nextY, rotation = 0 }
+  )
   transition.to(getReady, {
     time = 600,
     y = yReady,
     transition = easing.outBounce,
-    onComplete = function() bird:play() end
+    onComplete = function() bird.displayObject:play() end
   })
 end
 
@@ -160,8 +237,8 @@ local function flap()
   end
 
   if currentGameStatus == gameStatus.playing then
-    vBird = wBird
-    bird:play()
+    bird.velocityY = bird.initialVelocityY
+    bird.displayObject:play()
     audio.play(wingSound)
   end
 
@@ -225,40 +302,9 @@ end
 
 
 local function explosion()
-  emitter.x = bird.x
-  emitter.y = bird.y
+  emitter.x = bird.displayObject.x
+  emitter.y = bird.displayObject.y
   emitter:start()
-end
-
-
-
-
-local function crash()
-  currentGameStatus = gameStatus.gameOver
-  audio.play(hitSound)
-  gameOver.y = 0
-  gameOver.alpha = 1
-  transition.to(gameOver, { time = 600, y = yReady, transition = easing.outBounce })
-  board.y = 0
-  board.alpha = 1
-
-  if score > bestScore then
-    bestScore = score
-    saveBestScore()
-  end
-  bestTitle.text = bestScore
-  scoreTitle.text = score
-  if score < 10 then
-    silver.alpha = 0
-    gold.alpha = 0
-  elseif score < 50 then
-    silver.alpha = 1
-    gold.alpha = 0
-  else
-    silver.alpha = 0
-    gold.alpha = 1
-  end
-  transition.to(board, { time = 600, y = yReady + 100, transition = easing.outBounce })
 end
 
 local function collision(i)
@@ -268,8 +314,8 @@ local function collision(i)
   local x = pipes[i].x
   local y = pipes[i].y
 
-  if xBird > (x - dx) and xBird < (x + dx) then
-    if yBird > (y + dy) or yBird < (y - dy) then
+  if bird.nextX > (x - dx) and bird.nextX < (x + dx) then
+    if bird.nextY > (y + dy) or bird.nextY < (y - dy) then
       boom = 1
     end
   end
@@ -284,15 +330,12 @@ local function gameLoop(event)
   local eps = 10
   local leftEdge = -60
   if currentGameStatus == gameStatus.playing then
-    xLand = xLand + uBird * dt
-    if xLand < 0 then
-      xLand = display.contentCenterX * 2 + xLand
-    end
-    ground.x = xLand
+    ground:update(dt)
+
     for i = 1, 3 do
-      local xb = xBird - eps
+      local xb = bird.nextX - eps
       local xOld = pipes[i].x
-      local x = xOld + uBird * dt
+      local x = xOld + bird.velocityX * dt
       if x < leftEdge then
         x = wPipe * 3 + x
         pipes[i].y = calcRandomHole()
@@ -314,30 +357,7 @@ local function gameLoop(event)
     end
   end
 
-  if currentGameStatus == gameStatus.playing or currentGameStatus == gameStatus.dying then
-    -- Apply gravity at 800 pixels per second
-    vBird = vBird + 800 * dt
-    yBird = yBird + vBird * dt
-    if yBird > yLand - eps then
-      yBird = yLand - eps
-      crash()
-    end
-    bird.x = xBird
-    bird.y = yBird
-    if currentGameStatus == gameStatus.playing then
-      bird.rotation = -30 * math.atan(vBird / uBird)
-    else
-      bird.rotation = vBird / 8
-    end
-  end
-end
-
-local function setupLand()
-  ground = display.newImageRect("Assets/ground.png", display.actualContentWidth * 2, display.actualContentHeight * 0.2)
-  ground.x = display.contentCenterX
-
-  -- (display.actualContentHeight * 0.8) + (ground.contentHeight / 2) == display.actualContentHeight * 0.9
-  ground.y = display.actualContentHeight * 0.9
+  bird:update(dt, eps)
 end
 
 local function setupImages()
@@ -413,9 +433,9 @@ end
 -- Start application point
 loadSounds()
 setupImages()
-setupBird()
+bird:setup()
 setupExplosion()
-setupLand()
+ground:setup()
 initGame()
 loadBestScore()
 
