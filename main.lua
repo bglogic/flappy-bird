@@ -394,8 +394,4 @@ initGame()
 loadBestScore()
 local gameLoopTimer = timer.performWithDelay(25, gameLoop, 0)
 
-
--- debug text line
-local loadingText = display.newText("Debug info", display.contentCenterX, display.contentCenterY, nil, 20)
-
 display.setStatusBar(display.HiddenStatusBar)
