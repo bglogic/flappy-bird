@@ -152,8 +152,7 @@ local function initGame()
   transition.to(getReady, { time = 600, y = yReady, transition = easing.outBounce, onComplete = prompt })
 end
 
-
-local function wing()
+local function flap()
   if gameStatus == 0 then
     gameStatus = 1
     getReady.alpha = 0
@@ -169,6 +168,22 @@ local function wing()
     gameStatus = 0
     initGame()
   end
+end
+
+local function tapInput()
+  flap()
+  return true -- Prevents propagation to underlying objects
+end
+
+local function keyInput(event)
+  if (event.keyName == "up") then
+    local phase = event.phase
+    if (phase == "down") then
+      flap()
+    end
+  end
+
+  return true -- Prevents propagation to underlying objects
 end
 
 local function setupExplosion()
@@ -392,6 +407,8 @@ setupLand()
 initGame()
 loadBestScore()
 local gameLoopTimer = timer.performWithDelay(25, gameLoop, 0)
-Runtime:addEventListener("tap", wing)
+
+Runtime:addEventListener("tap", tapInput)
+Runtime:addEventListener("key", keyInput)
 
 display.setStatusBar(display.HiddenStatusBar)
