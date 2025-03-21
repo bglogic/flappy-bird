@@ -76,7 +76,7 @@ local function loadBestScore()
     -- Read data from file
     local contents = file:read("*a")
     -- Output the file contents
-    bestScore = tonumber(contents)
+    bestScore = tonumber(contents) or 0
     -- Close the file handle
     io.close(file)
   end
@@ -342,9 +342,24 @@ local function setupImages()
   board = display.newGroup()
   local img = display.newImageRect(board, "Assets/board.png", 240, 140)
 
-  scoreTitle = display.newText(board, score, 80, -18, "Assets/troika.otf", 21)
+  scoreTitle = display.newText({
+    parent = board,
+    text = tostring(score) or "0",
+    x = 80,
+    y = -18,
+    font = "Assets/troika.otf",
+    fontSize = 21
+  })
   scoreTitle:setFillColor(0.75, 0, 0)
-  bestTitle = display.newText(board, bestScore, 80, 24, "Assets/troika.otf", 21)
+
+  bestTitle = display.newText({
+    parent = board,
+    text = tostring(bestScore) or "0",
+    x = 80,
+    y = 24,
+    font = "Assets/troika.otf",
+    fontSize = 21
+  })
   bestTitle:setFillColor(0.75, 0, 0)
 
   silver = display.newImageRect(board, "Assets/silver.png", 44, 44)
@@ -359,15 +374,13 @@ local function setupImages()
   board.y = 0
   board.alpha = 0
 
-  local txt = {
+  title = display.newText({
     x = display.contentCenterX,
     y = 60,
     text = "",
     font = "Assets/troika.otf",
     fontSize = 35
-  }
-
-  title = display.newText(txt)
+  })
   title:setFillColor(1, 1, 1)
 end
 
@@ -379,7 +392,7 @@ setupExplosion()
 setupLand()
 initGame()
 loadBestScore()
-gameLoopTimer = timer.performWithDelay(25, gameLoop, 0)
+local gameLoopTimer = timer.performWithDelay(25, gameLoop, 0)
 
 
 -- debug text line
