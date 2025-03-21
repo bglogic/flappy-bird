@@ -100,40 +100,30 @@ end
 
 
 local function setupBird()
-  local options =
-  {
+  local imageSheet = graphics.newImageSheet("Assets/bird.png", {
     width = 70,
     height = 50,
     numFrames = 4,
     sheetContentWidth = 280, -- width of original 1x size of entire sheet
     sheetContentHeight = 50  -- height of original 1x size of entire sheet
-  }
-  local imageSheet = graphics.newImageSheet("Assets/bird.png", options)
+  })
 
-  local sequenceData =
-  {
+  bird = display.newSprite(imageSheet, {
     name = "walking",
     start = 1,
     count = 3,
     time = 300,
     loopCount = 2,            -- Optional ; default is 0 (loop indefinitely)
     loopDirection = "forward" -- Optional ; values include "forward" or "bounce"
-  }
-  bird = display.newSprite(imageSheet, sequenceData)
+  })
   bird.x = xBird
   bird.y = yBird
 end
-
-local function prompt(tempo)
-  bird:play()
-end
-
 
 local function initGame()
   score = 0
   scoreStep = 5
   title.text = score
-  --  title.text = hLand
 
   for i = 1, 3 do
     pipes[i].x = 400 + display.contentCenterX * (i - 1)
@@ -149,7 +139,12 @@ local function initGame()
   board.alpha = 0
   audio.play(swooshingSound)
   transition.to(bird, { time = 300, x = xBird, y = yBird, rotation = 0 })
-  transition.to(getReady, { time = 600, y = yReady, transition = easing.outBounce, onComplete = prompt })
+  transition.to(getReady, {
+    time = 600,
+    y = yReady,
+    transition = easing.outBounce,
+    onComplete = function() bird:play() end
+  })
 end
 
 local function flap()
