@@ -327,8 +327,10 @@ local function gameLoop()
 end
 
 local function setupLand()
-  ground = display.newImageRect("Assets/land.png", display.actualContentWidth * 2, display.actualContentHeight * 0.2)
+  ground = display.newImageRect("Assets/ground.png", display.actualContentWidth * 2, display.actualContentHeight * 0.2)
   ground.x = display.contentCenterX
+
+  -- (display.actualContentHeight * 0.8) + (ground.height / 2) == display.actualContentHeight * 0.9
   ground.y = display.actualContentHeight * 0.9
 end
 
